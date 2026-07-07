@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     @NonNull
     public static final String sharedPrefKey = "cl.coders.faketraveler.sharedprefs";
     @NonNull
-    public static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.######", DecimalFormatSymbols.getInstance(Locale.ROOT));
+    public static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.#######", DecimalFormatSymbols.getInstance(Locale.ROOT));
 
     private MaterialButton buttonApplyStop;
     private WebView webView;
