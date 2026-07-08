@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">Fake Traveler</string>
+    <string name="app_name" translatable="false">KavyaZES</string>
 
     <!--  Strings from activity_main.xml layout  -->
     <!-- Latitude abbreviation  -->
@@ -25,10 +25,14 @@
     <string name="ActivityMore_Copyright">Copyright 2018\-2025 Matías Castillo Felmer and contributors</string>
     <string name="ActivityMore_SourceCode">Source code available in https://github.com/mcastillof/FakeTraveler</string>
     <string name="ActivityMore_Bugs">Report bugs to https://github.com/mcastillof/FakeTraveler/issues</string>
-    <string name="ActivityMore_IconLicense">The launcher icon was created by @ArtistDev44 - thank you very much for your work!</string>
-    <string name="ActivityMore_HowToInstructions">Long press where you want to be located in the map and press Apply button. The location will be mocked one or more times accordingly to configuration below. While the mock is running, you can change the location just by long pressing where you want to be. To stop mocking the location, press the Stop button. Note: you must enable Fake Traveler as mock location app in Developers options.</string>
+    <string name="ActivityMore_IconLicense">The new app icon for KavyaZES was provided by the user.</string>
+    <string name="ActivityMore_HowToInstructions">Long press where you want to be located in the map and press Apply button. The location will be mocked one or more times accordingly to configuration below. While the mock is running, you can change the location just by long pressing where you want to be. To stop mocking the location, press the Stop button. Note: you must enable KavyaZES as mock location app in Developers options.</string>
     <string name="ActivityMore_DMockLatLon">Mock movement? (1&#160;/&#160;1 000 000°, 0&#160;=&#160;no)</string>
     <string name="ActivityMore_MapProvider">Map Provider (e.g., \'OpenStreetMap\')</string>
     <string name="ActivityMore_MapProviderInfo">Requires restart - a list of possible values can be found here: https://leaflet-extras.github.io/leaflet-providers/preview/</string>
     <string name="ActivityMore_LeafletLicense"><![CDATA[Both <a href="https://github.com/Leaflet/Leaflet/blob/main/LICENSE">Leaflet</a> and <a href="https://github.com/leaflet-extras/leaflet-providers/blob/master/license.md">Leaflet-providers</a> are licensed under the BSD 2-Clause License.]]></string>
+    <string name="ActivityMore_Settings">Settings</string>
+    <string name="ActivityMore_About">About</string>
+    <string name="ActivityMore_LatOffset">Lat Offset</string>
+    <string name="ActivityMore_LongOffset">Long Offset</string>
 </resources>

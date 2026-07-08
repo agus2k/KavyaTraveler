@@ -45,11 +45,19 @@ async function searchForAddress() {
     onMapClick(mapEvent);
 }
 
+function onMarkerDragEnd(e) {
+    var latlng = e.target.getLatLng().wrap();
+    var wrap = "LatLng(" + latlng.lat + ", " + latlng.lng + ")";
+    Android.setPosition(wrap);
+}
+
 function onMapClick(e) {
     if (typeof mapMarker != 'undefined')
         map.removeLayer(mapMarker);
-    mapMarker = L.marker(e.latlng, {icon: icon}).addTo(map);
-    var wrap = e.latlng.wrap().toString();
+    mapMarker = L.marker(e.latlng, {icon: icon, draggable: true}).addTo(map);
+    mapMarker.on('dragend', onMarkerDragEnd);
+    var latlng = e.latlng.wrap();
+    var wrap = "LatLng(" + latlng.lat + ", " + latlng.lng + ")";
     Android.setPosition(wrap);
 }
 
@@ -62,12 +70,14 @@ function setOnMap(aLat, aLng) {
         map.removeLayer(mapMarker);
     zoom = map.getZoom();
     map.setView(new L.LatLng(aLat, aLng), zoom);
-    mapMarker = L.marker([aLat, aLng], {icon: icon}).addTo(map);
+    mapMarker = L.marker([aLat, aLng], {icon: icon, draggable: true}).addTo(map);
+    mapMarker.on('dragend', onMarkerDragEnd);
     alreadyRunning = true;
     //alert(alreadyRunning);
 }
 
-map.on('contextmenu', onMapClick);
+map.on('click', onMapClick);
 map.on('zoomend', onZoomEnd);
 
-mapMarker = L.marker([lat, lng], {icon: icon}).addTo(map);
+mapMarker = L.marker([lat, lng], {icon: icon, draggable: true}).addTo(map);
+mapMarker.on('dragend', onMarkerDragEnd);
