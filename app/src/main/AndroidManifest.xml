@@ -18,7 +18,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name="cl.coders.faketraveler.MainActivity"
+            android:name="com.kavya.zes.MainActivity"
             android:exported="true"
             android:launchMode="singleTask"
             android:theme="@style/Theme.App.Starting">
@@ -47,11 +47,11 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="cl.coders.faketraveler.MoreActivity"
-            android:parentActivityName="cl.coders.faketraveler.MainActivity" />
+            android:name="com.kavya.zes.MoreActivity"
+            android:parentActivityName="com.kavya.zes.MainActivity" />
 
         <service
-            android:name=".MockedLocationService"
+            android:name="com.kavya.zes.MockedLocationService"
             android:enabled="true" />
 
     </application>

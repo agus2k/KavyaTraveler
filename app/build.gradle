@@ -6,7 +6,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
     }
     defaultConfig {
-        applicationId = "cl.coders.faketraveler"
+        applicationId = "com.kavya.zes"
         minSdk = 21
         compileSdk = 36
         targetSdk = 36
@@ -19,7 +19,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-    namespace = 'cl.coders.faketraveler'
+    namespace = 'com.kavya.zes'
 }
 
 dependencies {
