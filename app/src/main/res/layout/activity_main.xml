@@ -79,11 +79,39 @@
                 android:orientation="horizontal">
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/button_applyStop"
+                    android:id="@+id/button_apply"
                     android:layout_width="0dp"
                     android:layout_height="56dp"
                     android:layout_weight="1"
                     android:text="@string/ActivityMain_Apply"
+                    app:cornerRadius="12dp" />
+
+                <Space
+                    android:layout_width="8dp"
+                    android:layout_height="wrap_content" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button_stop"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_weight="1"
+                    android:text="@string/ActivityMain_Stop"
+                    android:textColor="@color/design_default_color_error"
+                    app:cornerRadius="12dp" />
+
+                <Space
+                    android:layout_width="8dp"
+                    android:layout_height="wrap_content" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button_bookmarks"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:padding="0dp"
+                    android:text="★"
+                    android:textSize="20sp"
                     app:cornerRadius="12dp" />
 
                 <Space

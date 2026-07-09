@@ -3,8 +3,19 @@ var lat = urlParams.get('lat') ?? 12;
 var lng = urlParams.get('lng') ?? 15;
 var zoom = urlParams.get('zoom') ?? 12;
 var provider = urlParams.get('provider') ?? 'OpenStreetMap';
+var radius = urlParams.get('radius') ?? 300;
+var cLat = urlParams.get('cLat') ?? lat;
+var cLng = urlParams.get('cLng') ?? lng;
 
-var map = L.map('map').setView([lat, lng], zoom);
+var map = L.map('map', {zoomControl: false}).setView([lat, lng], zoom);
+L.control.zoom({position: 'bottomright'}).addTo(map);
+
+var circle = L.circle([cLat, cLng], {
+    color: 'red',
+    fillColor: '#f03',
+    fillOpacity: 0.2,
+    radius: radius
+}).addTo(map);
 var popup = L.popup();
 var alreadyRunning = false;
 
@@ -65,13 +76,19 @@ function onZoomEnd(e) {
     Android.setZoom(map.getZoom());
 }
 
-function setOnMap(aLat, aLng) {
+function updateCircle(aLat, aLng, aRadius) {
+    if (aRadius !== undefined) circle.setRadius(aRadius);
+    circle.setLatLng([aLat, aLng]);
+}
+
+function setOnMap(aLat, aLng, aRadius) {
     if (typeof mapMarker != 'undefined')
         map.removeLayer(mapMarker);
     zoom = map.getZoom();
     map.setView(new L.LatLng(aLat, aLng), zoom);
     mapMarker = L.marker([aLat, aLng], {icon: icon, draggable: true}).addTo(map);
     mapMarker.on('dragend', onMarkerDragEnd);
+
     alreadyRunning = true;
     //alert(alreadyRunning);
 }

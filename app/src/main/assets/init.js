@@ -8,7 +8,23 @@ var lat = (_urlParams$get = urlParams.get('lat')) !== null && _urlParams$get !==
 var lng = (_urlParams$get2 = urlParams.get('lng')) !== null && _urlParams$get2 !== void 0 ? _urlParams$get2 : 15;
 var zoom = (_urlParams$get3 = urlParams.get('zoom')) !== null && _urlParams$get3 !== void 0 ? _urlParams$get3 : 12;
 var provider = (_urlParams$get4 = urlParams.get('provider')) !== null && _urlParams$get4 !== void 0 ? _urlParams$get4 : 'OpenStreetMap';
-var map = L.map('map').setView([lat, lng], zoom);
+var radius = urlParams.get('radius') ?? 300;
+var cLat = urlParams.get('cLat') ?? lat;
+var cLng = urlParams.get('cLng') ?? lng;
+
+var map = L.map('map', {
+  zoomControl: false
+}).setView([lat, lng], zoom);
+L.control.zoom({
+  position: 'bottomright'
+}).addTo(map);
+
+var circle = L.circle([cLat, cLng], {
+  color: 'red',
+  fillColor: '#f03',
+  fillOpacity: 0.2,
+  radius: radius
+}).addTo(map);
 var popup = L.popup();
 var alreadyRunning = false;
 var searchInput = document.getElementById("address_input");
@@ -87,7 +103,12 @@ function onMapClick(e) {
 function onZoomEnd(e) {
   Android.setZoom(map.getZoom());
 }
-function setOnMap(aLat, aLng) {
+function updateCircle(aLat, aLng, aRadius) {
+  if (aRadius !== undefined) circle.setRadius(aRadius);
+  circle.setLatLng([aLat, aLng]);
+}
+
+function setOnMap(aLat, aLng, aRadius) {
   if (typeof mapMarker != 'undefined') map.removeLayer(mapMarker);
   zoom = map.getZoom();
   map.setView(new L.LatLng(aLat, aLng), zoom);
@@ -96,6 +117,7 @@ function setOnMap(aLat, aLng) {
     draggable: true
   }).addTo(map);
   mapMarker.on('dragend', onMarkerDragEnd);
+
   alreadyRunning = true;
   //alert(alreadyRunning);
 }

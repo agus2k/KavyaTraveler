@@ -1,38 +1,44 @@
 <resources>
     <string name="app_name" translatable="false">KavyaZES</string>
 
-    <!--  Strings from activity_main.xml layout  -->
-    <!-- Latitude abbreviation  -->
-    <string name="ActivityMain_Lat">Lat</string>
-    <!-- Longitude abbreviation  -->
-    <string name="ActivityMain_Long">Long</string>
-    <string name="ActivityMain_Apply">Apply</string>
-    <!-- Apply button then becomes Stop button through java code-->
+    <!--  Strings dari activity_main.xml layout  -->
+    <string name="ActivityMain_Lat">Lintang</string>
+    <string name="ActivityMain_Long">Bujur</string>
+    <string name="ActivityMain_Apply">Mulai</string>
     <string name="ActivityMain_Stop">Stop</string>
+    <string name="ActivityMore_CircleRadius">Radius Lingkaran (Meter)</string>
 
-    <!--  Strings from MainActivity.java  -->
-    <string name="MainActivity_NoLatLong">No latitude/longitude values. Long press in the map where you want to be located.</string>
-    <string name="MainActivity_MockApplied">Mocked location applied.</string>
-    <string name="MainActivity_MockNotApplied">Mocked location not applied. You must enable mock location in developer settings!</string>
-    <string name="MainActivity_MockLocRunning">Mocking location service running.</string>
-    <string name="MainActivity_MockStopped">Mocking stopped.</string>
+    <!--  Strings dari MainActivity.java  -->
+    <string name="MainActivity_NoLatLong">Nilai lintang/bujur kosong. Tekan lama pada peta di lokasi yang Anda inginkan.</string>
+    <string name="MainActivity_MockApplied">Lokasi palsu diterapkan.</string>
+    <string name="MainActivity_MockNotApplied">Lokasi palsu tidak diterapkan. Anda harus mengaktifkan "Mock Location" di opsi pengembang!</string>
+    <string name="MainActivity_MockLocRunning">Layanan lokasi palsu sedang berjalan.</string>
+    <string name="MainActivity_MockStopped">Lokasi palsu dihentikan.</string>
 
-    <!--  Strings from activity_more.xml layout  -->
-    <string name="ActivityMore_HowToTittle">How to use it?</string>
-    <string name="ActivityMore_HowManyTimes">How many times you want to mock the location? (0&#160;=&#160;infinite)</string>
-    <string name="ActivityMore_TimeInterval">How many seconds between every mock?</string>
-    <string name="ActivityMore_Speed">Mock movement as speed</string>
-    <string name="ActivityMore_Copyright">Copyright 2018\-2025 Matías Castillo Felmer and contributors</string>
-    <string name="ActivityMore_SourceCode">Source code available in https://github.com/mcastillof/FakeTraveler</string>
-    <string name="ActivityMore_Bugs">Report bugs to https://github.com/mcastillof/FakeTraveler/issues</string>
-    <string name="ActivityMore_IconLicense">The new app icon for KavyaZES was provided by the user.</string>
-    <string name="ActivityMore_HowToInstructions">Long press where you want to be located in the map and press Apply button. The location will be mocked one or more times accordingly to configuration below. While the mock is running, you can change the location just by long pressing where you want to be. To stop mocking the location, press the Stop button. Note: you must enable KavyaZES as mock location app in Developers options.</string>
-    <string name="ActivityMore_DMockLatLon">Mock movement? (1&#160;/&#160;1 000 000°, 0&#160;=&#160;no)</string>
-    <string name="ActivityMore_MapProvider">Map Provider (e.g., \'OpenStreetMap\')</string>
-    <string name="ActivityMore_MapProviderInfo">Requires restart - a list of possible values can be found here: https://leaflet-extras.github.io/leaflet-providers/preview/</string>
-    <string name="ActivityMore_LeafletLicense"><![CDATA[Both <a href="https://github.com/Leaflet/Leaflet/blob/main/LICENSE">Leaflet</a> and <a href="https://github.com/leaflet-extras/leaflet-providers/blob/master/license.md">Leaflet-providers</a> are licensed under the BSD 2-Clause License.]]></string>
-    <string name="ActivityMore_Settings">Settings</string>
-    <string name="ActivityMore_About">About</string>
-    <string name="ActivityMore_LatOffset">Lat Offset</string>
-    <string name="ActivityMore_LongOffset">Long Offset</string>
+    <!--  Strings dari activity_more.xml layout  -->
+    <string name="ActivityMore_HowToTittle">Cara Penggunaan</string>
+    <string name="ActivityMore_HowManyTimes">Berapa kali ingin memalsukan lokasi? (0 = tak terbatas)</string>
+    <string name="ActivityMore_TimeInterval">Berapa detik interval setiap pemalsuan?</string>
+    <string name="ActivityMore_Speed">Simulasikan gerakan sebagai kecepatan</string>
+    <string name="ActivityMore_Copyright">Hak Cipta 2018-2025 Matías Castillo Felmer dan kontributor</string>
+    <string name="ActivityMore_SourceCode">Kode sumber tersedia di https://github.com/mcastillof/FakeTraveler</string>
+    <string name="ActivityMore_Bugs">Laporkan bug ke https://github.com/mcastillof/FakeTraveler/issues</string>
+    <string name="ActivityMore_IconLicense">Ikon aplikasi baru untuk KavyaZES disediakan oleh pengguna.</string>
+    <string name="ActivityMore_HowToInstructions">1. Aktifkan KavyaZES sebagai aplikasi \"Lokasi Palsu\" (Mock Location) di Opsi Pengembang pada pengaturan ponsel Anda.\n\n2. Buka aplikasi KavyaZES, cari lokasi yang diinginkan melalui kolom pencarian atau tekan lama pada peta untuk menandai titik lokasi.\n\n3. Sesuaikan presisi desimal koordinat di menu Pengaturan jika diperlukan (default adalah 7 desimal untuk akurasi tinggi).\n\n4. Tekan tombol \"Terapkan\" untuk mulai memalsukan lokasi. Tombol akan berubah menjadi \"Berhenti\" untuk mengakhiri pemalsuan.\n\n5. Gunakan ikon Bintang (★) untuk menyimpan lokasi favorit agar mudah diakses kembali di kemudian hari.</string>
+    <string name="ActivityMore_DMockLatLon">Simulasikan gerakan? (1 / 1.000.000°, 0 = tidak)</string>
+    <string name="ActivityMore_MapProvider">Penyedia Peta (contoh: \'OpenStreetMap\')</string>
+    <string name="ActivityMore_MapProviderInfo">Memerlukan restart - daftar nilai yang mungkin dapat ditemukan di sini: https://leaflet-extras.github.io/leaflet-providers/preview/</string>
+    <string name="ActivityMore_LeafletLicense"><![CDATA[Baik <a href="https://github.com/Leaflet/Leaflet/blob/main/LICENSE">Leaflet</a> maupun <a href="https://github.com/leaflet-extras/leaflet-providers/blob/master/license.md">Leaflet-providers</a> dilisensikan di bawah Lisensi BSD 2-Clause.]]></string>
+    <string name="ActivityMore_Settings">Pengaturan</string>
+    <string name="ActivityMore_About">Tentang</string>
+    <string name="ActivityMore_LatOffset">Offset Lintang</string>
+    <string name="ActivityMore_LongOffset">Offset Bujur</string>
+    <string name="ActivityMore_DecimalPrecision">Presisi Desimal (6-10)</string>
+    <string name="Bookmark_Title">Lokasi Tersimpan</string>
+    <string name="Bookmark_Add">Tambah lokasi saat ini ke bookmark</string>
+    <string name="Bookmark_Name">Nama Bookmark</string>
+    <string name="Bookmark_Empty">Belum ada lokasi tersimpan</string>
+    <string name="Bookmark_Delete">Hapus</string>
+    <string name="Bookmark_Save">Simpan</string>
+    <string name="Bookmark_Cancel">Batal</string>
 </resources>

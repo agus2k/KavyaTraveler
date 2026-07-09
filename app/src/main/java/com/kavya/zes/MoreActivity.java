@@ -14,11 +14,13 @@ import android.text.Html;
 import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
+import android.widget.AutoCompleteTextView;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
-
+import android.widget.ArrayAdapter;
 import androidx.appcompat.app.AppCompatActivity;
+import com.google.android.material.appbar.MaterialToolbar;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -70,7 +72,7 @@ public class MoreActivity extends AppCompatActivity {
                 SharedPreferences sharedPref = context.getSharedPreferences(sharedPrefKey, Context.MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPref.edit();
 
-                if (etDMockLat.getText().toString().isBlank()) {
+                if (etDMockLat.getText().toString().trim().isEmpty()) {
                     putDouble(editor, "dLat", 0);
                 } else {
                     try {
@@ -103,7 +105,7 @@ public class MoreActivity extends AppCompatActivity {
                 SharedPreferences sharedPref = context.getSharedPreferences(sharedPrefKey, Context.MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPref.edit();
 
-                if (etDMockLon.getText().toString().isBlank()) {
+                if (etDMockLon.getText().toString().trim().isEmpty()) {
                     putDouble(editor, "dLng", 0);
                 } else {
                     try {
@@ -128,6 +130,28 @@ public class MoreActivity extends AppCompatActivity {
         });
 
         EditText etMockCount = findViewById(R.id.et_MockCount);
+        
+        EditText etCircleRadius = findViewById(R.id.et_CircleRadius);
+        etCircleRadius.setText(String.format(Locale.ROOT, "%d", sharedPref.getInt("circleRadius", 300)));
+        etCircleRadius.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void afterTextChanged(Editable s) {
+                SharedPreferences.Editor editor = getSharedPreferences(sharedPrefKey, Context.MODE_PRIVATE).edit();
+                if (etCircleRadius.getText().toString().trim().isEmpty()) {
+                    editor.putInt("circleRadius", 300);
+                } else {
+                    try {
+                        editor.putInt("circleRadius", Integer.parseInt(etCircleRadius.getText().toString()));
+                    } catch (Throwable t) {
+                        Log.e(MoreActivity.class.toString(), "Could not parse circleRadius!", t);
+                    }
+                }
+                editor.apply();
+            }
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+        });
+
         etMockCount.setText(String.format(Locale.ROOT, "%d", sharedPref.getInt("mockCount", 0)));
         etMockCount.addTextChangedListener(new TextWatcher() {
             @Override
@@ -136,7 +160,7 @@ public class MoreActivity extends AppCompatActivity {
                 SharedPreferences sharedPref = context.getSharedPreferences(sharedPrefKey, Context.MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPref.edit();
 
-                if (etMockCount.getText().toString().isBlank()) {
+                if (etMockCount.getText().toString().trim().isEmpty()) {
                     editor.putInt("mockCount", 0);
                 } else {
                     try {
@@ -169,7 +193,7 @@ public class MoreActivity extends AppCompatActivity {
                 SharedPreferences sharedPref = context.getSharedPreferences(sharedPrefKey, Context.MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPref.edit();
 
-                if (etMockFrequency.getText().toString().isBlank()) {
+                if (etMockFrequency.getText().toString().trim().isEmpty()) {
                     editor.putInt("mockFrequency", 10);
                 } else {
                     try {
@@ -206,6 +230,29 @@ public class MoreActivity extends AppCompatActivity {
 
 
         EditText etMapProvider = findViewById(R.id.et_MapProvider);
+        
+        AutoCompleteTextView spinnerDecimalPrecision = findViewById(R.id.spinner_DecimalPrecision);
+        String[] precisionOptions = new String[]{
+                "6 (Contoh: -7.123456, 110.123456)",
+                "7 (Contoh: -7.1234567, 110.1234567)",
+                "8 (Contoh: -7.12345678, 110.12345678)",
+                "9 (Contoh: -7.123456789, 110.123456789)",
+                "10 (Contoh: -7.1234567890, 110.1234567890)"
+        };
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, precisionOptions);
+        spinnerDecimalPrecision.setAdapter(adapter);
+
+        int currentPrecision = sharedPref.getInt("decimalPrecision", 7);
+        int selectionIndex = currentPrecision - 6;
+        if (selectionIndex >= 0 && selectionIndex < precisionOptions.length) {
+            spinnerDecimalPrecision.setText(precisionOptions[selectionIndex], false);
+        }
+
+        spinnerDecimalPrecision.setOnItemClickListener((parent, view, position, id) -> {
+            int newPrecision = position + 6;
+            sharedPref.edit().putInt("decimalPrecision", newPrecision).apply();
+        });
+
         etMapProvider.setText(sharedPref.getString("mapProvider",
                 MapProviderUtil.getDefaultMapProvider(Locale.getDefault())));
         etMapProvider.addTextChangedListener(new TextWatcher() {
@@ -215,7 +262,7 @@ public class MoreActivity extends AppCompatActivity {
                 SharedPreferences sharedPref = context.getSharedPreferences(sharedPrefKey, Context.MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPref.edit();
 
-                if (etMapProvider.getText().toString().isBlank()) {
+                if (etMapProvider.getText().toString().trim().isEmpty()) {
                     editor.putString("mapProvider", MapProviderUtil.getDefaultMapProvider(Locale.getDefault()));
                 } else {
                     editor.putString("mapProvider", etMapProvider.getText().toString());

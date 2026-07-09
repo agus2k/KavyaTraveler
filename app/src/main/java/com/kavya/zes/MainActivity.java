@@ -23,15 +23,19 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.View;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.splashscreen.SplashScreen;
@@ -43,6 +47,7 @@ import com.google.android.material.snackbar.Snackbar;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.util.List;
 import java.util.Locale;
 
 
@@ -51,9 +56,10 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     @NonNull
     public static final String sharedPrefKey = "com.kavya.zes.sharedprefs";
     @NonNull
-    public static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.#######", DecimalFormatSymbols.getInstance(Locale.ROOT));
+    public static DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.#######", DecimalFormatSymbols.getInstance(Locale.ROOT));
 
-    private MaterialButton buttonApplyStop;
+    private MaterialButton buttonApply;
+    private MaterialButton buttonStop;
     private WebView webView;
     private EditText editTextLat;
     private EditText editTextLng;
@@ -75,6 +81,8 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     private int mockFrequency;
     private double dLat;
     private double dLng;
+    private double circleLat;
+    private double circleLng;
     private boolean mockSpeed;
     private long endTime;
     private String mapProvider;
@@ -86,14 +94,23 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.controls_card), (v, insets) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_layout), (v, insets) -> {
             Insets bars = insets.getInsets(
                     WindowInsetsCompat.Type.systemBars()
                             | WindowInsetsCompat.Type.displayCutout()
             );
-            androidx.constraintlayout.widget.ConstraintLayout.LayoutParams lp = (androidx.constraintlayout.widget.ConstraintLayout.LayoutParams) v.getLayoutParams();
+            
+            // Apply bottom margin to controls card
+            View controlsCard = findViewById(R.id.controls_card);
+            androidx.constraintlayout.widget.ConstraintLayout.LayoutParams lp = (androidx.constraintlayout.widget.ConstraintLayout.LayoutParams) controlsCard.getLayoutParams();
             lp.bottomMargin = bars.bottom + (int) (16 * getResources().getDisplayMetrics().density);
-            v.setLayoutParams(lp);
+            controlsCard.setLayoutParams(lp);
+
+            // Inject safe area top into WebView
+            float density = getResources().getDisplayMetrics().density;
+            int topInsetDp = (int) (bars.top / density);
+            webView.evaluateJavascript("document.documentElement.style.setProperty('--safe-area-inset-top', '" + topInsetDp + "px');", null);
+
             return insets;
         });
 
@@ -101,19 +118,32 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         webView = findViewById(R.id.webView0);
         WebAppInterface webAppInterface = new WebAppInterface(this);
 
-        buttonApplyStop = findViewById(R.id.button_applyStop);
+        buttonApply = findViewById(R.id.button_apply);
+        buttonStop = findViewById(R.id.button_stop);
         MaterialButton buttonSettings = findViewById(R.id.button_settings);
+        MaterialButton buttonBookmarks = findViewById(R.id.button_bookmarks);
         editTextLat = findViewById(R.id.editTextLat);
         editTextLng = findViewById(R.id.editTextLng);
 
-        buttonApplyStop.setOnClickListener(view -> {
-            Intent intent = new Intent(this, MockedLocationService.class);
-            bindService(intent, this, BIND_AUTO_CREATE);
+        buttonApply.setOnClickListener(view -> {
+            if (binder == null) {
+                Intent intent = new Intent(this, MockedLocationService.class);
+                bindService(intent, this, BIND_AUTO_CREATE);
+            } else {
+                applyLocation();
+            }
+        });
+        buttonStop.setOnClickListener(view -> {
+            if (binder != null) {
+                unbindService(this);
+                disconnectService();
+            }
         });
         buttonSettings.setOnClickListener(view -> {
             Intent myIntent = new Intent(getBaseContext(), MoreActivity.class);
             startActivity(myIntent);
         });
+        buttonBookmarks.setOnClickListener(view -> showBookmarksDialog());
 
         webView.getSettings().setJavaScriptEnabled(true);
         webView.setWebChromeClient(new WebChromeClient());
@@ -130,6 +160,12 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         } catch (NameNotFoundException e) {
             Log.e(MainActivity.class.toString(), "Could not read version info!", e);
         }
+
+        SharedPreferences sharedPref = getSharedPreferences(sharedPrefKey, Context.MODE_PRIVATE);
+        int precision = sharedPref.getInt("decimalPrecision", 7);
+        StringBuilder pattern = new StringBuilder("#.");
+        for (int i = 0; i < precision; i++) pattern.append("#");
+        DECIMAL_FORMAT = new DecimalFormat(pattern.toString(), DecimalFormatSymbols.getInstance(Locale.ROOT));
 
         loadSharedPrefs();
         applyIntentOrDefault(getIntent());
@@ -196,12 +232,24 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     protected void onResume() {
         super.onResume();
         context = getApplicationContext();
+        SharedPreferences sharedPref = getSharedPreferences(sharedPrefKey, Context.MODE_PRIVATE);
+        int precision = sharedPref.getInt("decimalPrecision", 7);
+        StringBuilder pattern = new StringBuilder("#.");
+        for (int i = 0; i < precision; i++) pattern.append("#");
+        DECIMAL_FORMAT = new DecimalFormat(pattern.toString(), DecimalFormatSymbols.getInstance(Locale.ROOT));
+
         loadSharedPrefs();
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+
+        SharedPreferences sharedPref = getSharedPreferences(sharedPrefKey, Context.MODE_PRIVATE);
+        int precision = sharedPref.getInt("decimalPrecision", 7);
+        StringBuilder pattern = new StringBuilder("#.");
+        for (int i = 0; i < precision; i++) pattern.append("#");
+        DECIMAL_FORMAT = new DecimalFormat(pattern.toString(), DecimalFormatSymbols.getInstance(Locale.ROOT));
 
         loadSharedPrefs();
         applyIntentOrDefault(intent);
@@ -229,6 +277,8 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         if (mockFrequency <= 0) mockFrequency = 1;
         dLat = getDouble(sharedPref, "dLat", 0);
         dLng = getDouble(sharedPref, "dLng", 0);
+        circleLat = getDouble(sharedPref, "circleLat", 0);
+        circleLng = getDouble(sharedPref, "circleLng", 0);
         mockSpeed = sharedPref.getBoolean("mockSpeed", true);
         endTime = sharedPref.getLong("endTime", 0);
         mapProvider = sharedPref.getString("mapProvider", MapProviderUtil.getDefaultMapProvider(Locale.getDefault()));
@@ -250,6 +300,8 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         editor.putInt("mockFrequency", mockFrequency);
         putDouble(editor, "dLat", dLat);
         putDouble(editor, "dLng", dLng);
+        putDouble(editor, "circleLat", circleLat);
+        putDouble(editor, "circleLng", circleLng);
         editor.putBoolean("mockSpeed", mockSpeed);
         editor.putLong("endTime", endTime);
         editor.putString("mapProvider", mapProvider);
@@ -276,10 +328,16 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 
         setLatLng(lat, lng, LOAD);
 
+        SharedPreferences sharedPref = getSharedPreferences(sharedPrefKey, Context.MODE_PRIVATE);
+        int radius = sharedPref.getInt("circleRadius", 300);
+
         webView.loadUrl(Uri.parse("file:///android_asset/map.html").buildUpon()
                 .appendQueryParameter("lat", "" + lat)
                 .appendQueryParameter("lng", "" + lng)
                 .appendQueryParameter("zoom", "" + zoom)
+                .appendQueryParameter("radius", "" + radius)
+                .appendQueryParameter("cLat", "" + circleLat)
+                .appendQueryParameter("cLng", "" + circleLng)
                 .appendQueryParameter("provider", mapProvider)
                 .build()
                 .toString());
@@ -328,45 +386,37 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
      * Returns true editTextLat has no text
      */
     boolean latIsEmpty() {
-        return editTextLat.getText().toString().isBlank();
+        if (editTextLat.getText() == null) return true;
+        return editTextLat.getText().toString().trim().isEmpty();
     }
 
     /**
      * Returns true editTextLng has no text
      */
     boolean lngIsEmpty() {
-        return editTextLng.getText().toString().isBlank();
+        if (editTextLng.getText() == null) return true;
+        return editTextLng.getText().toString().trim().isEmpty();
     }
 
-    protected void setMapMarker(double lat, double lng) {
+    private void setMapMarker(double lat, double lng) {
         if (webView == null || webView.getUrl() == null) return;
-        webView.loadUrl("javascript:setOnMap(" + lat + "," + lng + ");");
+        SharedPreferences sharedPref = getSharedPreferences(sharedPrefKey, Context.MODE_PRIVATE);
+        int radius = sharedPref.getInt("circleRadius", 300);
+        webView.loadUrl("javascript:setOnMap(" + lat + "," + lng + "," + radius + ");");
     }
 
     /**
      * Changes the button to Apply, and its behavior.
      */
     void changeButtonToApply() {
-        buttonApplyStop.setText(context.getResources().getString(R.string.ActivityMain_Apply));
-        buttonApplyStop.setOnClickListener(view -> {
-            if (binder == null) {
-                Intent intent = new Intent(this, MockedLocationService.class);
-                bindService(intent, this, BIND_AUTO_CREATE);
-            } else {
-                binder.continueMock();
-            }
-        });
+        // No longer toggling a single button
     }
 
     /**
      * Changes the button to Stop, and its behavior.
      */
     void changeButtonToStop() {
-        buttonApplyStop.setText(context.getResources().getString(R.string.ActivityMain_Stop));
-        buttonApplyStop.setOnClickListener(view -> {
-            unbindService(this);
-            disconnectService();
-        });
+        // No longer toggling a single button
     }
 
     public void setZoom(double zoom) {
@@ -423,12 +473,85 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
             case NOT_MOCKED -> indicateMockStop();
             case SERVICE_BOUND -> applyLocation();
             case MOCKED -> {
-                changeButtonToStop();
                 showSnackbar(R.string.MainActivity_MockApplied);
             }
             case MOCK_ERROR -> showSnackbar(R.string.MainActivity_MockNotApplied);
         }
 
+    }
+
+    private void showBookmarksDialog() {
+        List<Bookmark> bookmarks = BookmarkUtil.getBookmarks(this);
+        ArrayAdapter<Bookmark> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, bookmarks);
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.Bookmark_Title)
+                .setAdapter(adapter, (dialog, which) -> {
+                    Bookmark b = bookmarks.get(which);
+                    
+                    new AlertDialog.Builder(this)
+                            .setTitle(b.name)
+                            .setItems(new String[]{"Pindah Lokasi Ke Sini", "Jadikan Pusat Lingkaran"}, (d, choice) -> {
+                                if (choice == 0) {
+                                    setLatLng(b.lat, b.lng, SourceChange.CHANGE_FROM_MAP);
+                                    setMapMarker(b.lat, b.lng);
+                                } else {
+                                    circleLat = b.lat;
+                                    circleLng = b.lng;
+                                    saveSettings();
+                                    updateCircleOnMap();
+                                }
+                            })
+                            .show();
+                })
+                .setPositiveButton(R.string.Bookmark_Add, (dialog, which) -> showAddBookmarkDialog())
+                .setNegativeButton(R.string.Bookmark_Cancel, null)
+                .setNeutralButton(R.string.Bookmark_Delete, (dialog, which) -> {
+                    showDeleteBookmarkDialog(bookmarks);
+                })
+                .show();
+    }
+
+    private void updateCircleOnMap() {
+        if (webView == null || webView.getUrl() == null) return;
+        SharedPreferences sharedPref = getSharedPreferences(sharedPrefKey, Context.MODE_PRIVATE);
+        int radius = sharedPref.getInt("circleRadius", 300);
+        webView.loadUrl("javascript:updateCircle(" + circleLat + "," + circleLng + "," + radius + ");");
+    }
+
+    private void showAddBookmarkDialog() {
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        input.setHint(R.string.Bookmark_Name);
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.Bookmark_Add)
+                .setView(input)
+                .setPositiveButton(R.string.Bookmark_Save, (dialog, which) -> {
+                    String name = input.getText().toString();
+                    if (!name.trim().isEmpty()) {
+                        List<Bookmark> bookmarks = BookmarkUtil.getBookmarks(this);
+                        bookmarks.add(new Bookmark(name, lat, lng));
+                        BookmarkUtil.saveBookmarks(this, bookmarks);
+                    }
+                })
+                .setNegativeButton(R.string.Bookmark_Cancel, null)
+                .show();
+    }
+
+    private void showDeleteBookmarkDialog(List<Bookmark> bookmarks) {
+        if (bookmarks.isEmpty()) return;
+        String[] names = new String[bookmarks.size()];
+        for (int i = 0; i < bookmarks.size(); i++) names[i] = bookmarks.get(i).name;
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.Bookmark_Delete)
+                .setItems(names, (dialog, which) -> {
+                    bookmarks.remove(which);
+                    BookmarkUtil.saveBookmarks(this, bookmarks);
+                    showBookmarksDialog();
+                })
+                .show();
     }
 
     private void indicateMockStop() {
