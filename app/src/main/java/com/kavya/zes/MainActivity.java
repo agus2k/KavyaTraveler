@@ -44,6 +44,12 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.play.core.appupdate.AppUpdateInfo;
+import com.google.android.play.core.appupdate.AppUpdateManager;
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
+import com.google.android.play.core.install.model.AppUpdateType;
+import com.google.android.play.core.install.model.UpdateAvailability;
+import com.google.android.gms.tasks.Task;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -226,6 +232,27 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
             saveSettings();
         }
 
+        checkUpdate();
+    }
+
+    private void checkUpdate() {
+        AppUpdateManager appUpdateManager = AppUpdateManagerFactory.create(this);
+        Task<AppUpdateInfo> appUpdateInfoTask = appUpdateManager.getAppUpdateInfo();
+
+        appUpdateInfoTask.addOnSuccessListener(appUpdateInfo -> {
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                    && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)) {
+                try {
+                    appUpdateManager.startUpdateFlowForResult(
+                            appUpdateInfo,
+                            AppUpdateType.IMMEDIATE,
+                            this,
+                            999);
+                } catch (Exception e) {
+                    Log.e("MainActivity", "Update flow failed", e);
+                }
+            }
+        });
     }
 
     @Override
@@ -239,6 +266,17 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         DECIMAL_FORMAT = new DecimalFormat(pattern.toString(), DecimalFormatSymbols.getInstance(Locale.ROOT));
 
         loadSharedPrefs();
+
+        // Check for updates in progress
+        AppUpdateManagerFactory.create(this).getAppUpdateInfo().addOnSuccessListener(appUpdateInfo -> {
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS) {
+                try {
+                    AppUpdateManagerFactory.create(this).startUpdateFlowForResult(appUpdateInfo, AppUpdateType.IMMEDIATE, this, 999);
+                } catch (Exception e) {
+                    Log.e("MainActivity", "Resume update failed", e);
+                }
+            }
+        });
     }
 
     @Override
