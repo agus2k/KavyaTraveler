@@ -132,12 +132,20 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         editTextLng = findViewById(R.id.editTextLng);
 
         buttonApply.setOnClickListener(view -> {
-            if (binder == null) {
-                Intent intent = new Intent(this, MockedLocationService.class);
-                bindService(intent, this, BIND_AUTO_CREATE);
-            } else {
-                applyLocation();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    androidx.core.app.ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 101);
+                    return;
+                }
             }
+            
+            // Tambahkan pengecekan izin lokasi eksplisit
+            if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                androidx.core.app.ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION}, 102);
+                return;
+            }
+            
+            startMock();
         });
         buttonStop.setOnClickListener(view -> {
             if (binder != null) {
@@ -235,6 +243,21 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         checkUpdate();
     }
 
+    private void startMock() {
+        Intent intent = new Intent(this, MockedLocationService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent);
+        } else {
+            startService(intent);
+        }
+        
+        if (binder == null) {
+            bindService(intent, this, BIND_AUTO_CREATE);
+        } else {
+            applyLocation();
+        }
+    }
+
     private void checkUpdate() {
         AppUpdateManager appUpdateManager = AppUpdateManagerFactory.create(this);
         Task<AppUpdateInfo> appUpdateInfoTask = appUpdateManager.getAppUpdateInfo();
@@ -269,7 +292,8 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 
         // Check for updates in progress
         AppUpdateManagerFactory.create(this).getAppUpdateInfo().addOnSuccessListener(appUpdateInfo -> {
-            if (appUpdateInfo.updateAvailability() == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS) {
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                    && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)) {
                 try {
                     AppUpdateManagerFactory.create(this).startUpdateFlowForResult(appUpdateInfo, AppUpdateType.IMMEDIATE, this, 999);
                 } catch (Exception e) {
@@ -307,8 +331,8 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         SharedPreferences sharedPref = context.getSharedPreferences(sharedPrefKey, Context.MODE_PRIVATE);
 
         version = sharedPref.getInt("version", 0);
-        lat = getDouble(sharedPref, "lat", 12);
-        lng = getDouble(sharedPref, "lng", 15);
+        lat = getDouble(sharedPref, "lat", -7.7496395);
+        lng = getDouble(sharedPref, "lng", 113.426669);
         zoom = getDouble(sharedPref, "zoom", 12);
         mockCount = sharedPref.getInt("mockCount", 0);
         mockFrequency = sharedPref.getInt("mockFrequency", 10);

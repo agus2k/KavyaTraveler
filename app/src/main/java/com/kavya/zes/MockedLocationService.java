@@ -1,6 +1,11 @@
 package com.kavya.zes;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.location.LocationManager;
@@ -10,6 +15,7 @@ import android.os.IBinder;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
@@ -25,6 +31,8 @@ public class MockedLocationService extends Service {
 
     @NonNull
     private static final String TAG = MockedLocationService.class.getSimpleName();
+    private static final String CHANNEL_ID = "MockedLocationChannel";
+    private static final String ACTION_STOP = "com.kavya.zes.ACTION_STOP";
 
     @NonNull
     protected final MutableLiveData<MockState> mockState = new MutableLiveData<>();
@@ -61,6 +69,63 @@ public class MockedLocationService extends Service {
 
     private void indicateBinding() {
         mockState.postValue(MockState.SERVICE_BOUND);
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        createNotificationChannel();
+        startForeground(1, createNotification());
+        
+        if (intent != null && ACTION_STOP.equals(intent.getAction())) {
+            stopMocking();
+            return START_NOT_STICKY;
+        }
+        return START_STICKY;
+    }
+
+    private void stopMocking() {
+        for (TimerTask t : tasks)
+            t.cancel();
+        tasks.clear();
+        for (MockedLocationProvider prov : providers)
+            prov.shutdown();
+        providers.clear();
+        mockState.postValue(MockState.NOT_MOCKED);
+        stopForeground(true);
+        stopSelf();
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel serviceChannel = new NotificationChannel(
+                    CHANNEL_ID,
+                    "Layanan Lokasi Palsu",
+                    NotificationManager.IMPORTANCE_LOW
+            );
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) {
+                manager.createNotificationChannel(serviceChannel);
+            }
+        }
+    }
+
+    private Notification createNotification() {
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this,
+                0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
+
+        Intent stopIntent = new Intent(this, MockedLocationService.class);
+        stopIntent.setAction(ACTION_STOP);
+        PendingIntent stopPendingIntent = PendingIntent.getService(this,
+                0, stopIntent, PendingIntent.FLAG_IMMUTABLE);
+
+        return new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("KavyaZES Sedang Berjalan")
+                .setContentText("Lokasi palsu sedang aktif.")
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentIntent(pendingIntent)
+                .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", stopPendingIntent)
+                .build();
     }
 
     protected void startMockedService(double longitude, double latitude, double longitudeDistance, double latitudeDistance, long mockMilli, int maxTime, float mockSpeed) {

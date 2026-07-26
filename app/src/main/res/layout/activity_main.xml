@@ -43,13 +43,20 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:hint="@string/ActivityMain_Lat">
+                    android:hint="@string/ActivityMain_Lat"
+                    app:boxStrokeWidth="1dp"
+                    app:boxStrokeWidthFocused="1dp">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/editTextLat"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="numberSigned|numberDecimal" />
+                        android:focusable="false"
+                        android:clickable="false"
+                        android:cursorVisible="false"
+                        android:inputType="none"
+                        android:padding="8dp"
+                        android:textSize="14sp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <Space
@@ -61,13 +68,20 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:hint="@string/ActivityMain_Long">
+                    android:hint="@string/ActivityMain_Long"
+                    app:boxStrokeWidth="1dp"
+                    app:boxStrokeWidthFocused="1dp">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/editTextLng"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="numberSigned|numberDecimal" />
+                        android:focusable="false"
+                        android:clickable="false"
+                        android:cursorVisible="false"
+                        android:inputType="none"
+                        android:padding="8dp"
+                        android:textSize="14sp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
             </LinearLayout>

@@ -10,6 +10,7 @@
     <script src="polyfill.js"></script>
 
     <link rel="stylesheet" href="leaflet.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <script src="leaflet.js"></script>
     <script src="leaflet-providers.js"></script>
     <script src="search.js"></script>
@@ -28,9 +29,80 @@
             width: 100%;
             z-index: 1;
         }
+        .layer-control {
+            position: absolute;
+            top: calc(96px + var(--safe-area-inset-top, 0px));
+            right: 16px;
+            z-index: 1000;
+            background: white;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .layer-control:active {
+            background: #f0f0f0;
+        }
+        .layer-control span {
+            font-size: 24px;
+        }
+        .layer-menu {
+            position: absolute;
+            top: calc(146px + var(--safe-area-inset-top, 0px));
+            right: 16px;
+            z-index: 1000;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            display: none;
+            overflow: hidden;
+            flex-direction: column;
+            min-width: 140px;
+        }
+        .layer-item {
+            padding: 12px 16px;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        .layer-item:last-child {
+            border-bottom: none;
+        }
+        .layer-item:active {
+            background: #f5f5f5;
+        }
+        .layer-item.active {
+            color: #1a73e8;
+            font-weight: bold;
+        }
+        @media (prefers-color-scheme: dark) {
+            .layer-control, .layer-menu {
+                background: #202124;
+                color: white;
+            }
+            .layer-item {
+                color: #e8eaed;
+                border-bottom: 1px solid #3c4043;
+            }
+            .layer-item:active {
+                background: #303134;
+            }
+        }
+        @media (prefers-color-scheme: dark) {
+            .layer-control {
+                background: #202124;
+                color: white;
+            }
+        }
         #search-container {
             position: absolute;
-            top: calc(16px + var(--safe-area-inset-top, 0px));
+            top: calc(32px + var(--safe-area-inset-top, 0px));
             left: 16px;
             right: 16px;
             z-index: 1000;
@@ -94,6 +166,15 @@
 </div>
 
 <div id='map'></div>
+
+<div class="layer-control" onclick="toggleLayerMenu()">
+    <i class="material-icons">layers</i>
+</div>
+
+<div id="layer_menu" class="layer-menu">
+    <div class="layer-item active" onclick="selectLayer('OpenStreetMap', this)">Peta Biasa</div>
+    <div class="layer-item" onclick="selectLayer('Esri.WorldImagery', this)">Satelit</div>
+</div>
 
 <script src="init.js"></script>
 </body>
