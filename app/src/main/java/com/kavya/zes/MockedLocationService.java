@@ -32,7 +32,7 @@ public class MockedLocationService extends Service {
     @NonNull
     private static final String TAG = MockedLocationService.class.getSimpleName();
     private static final String CHANNEL_ID = "MockedLocationChannel";
-    private static final String ACTION_STOP = "com.kavya.zes.ACTION_STOP";
+    public static final String ACTION_STOP = "com.kavya.zes.ACTION_STOP";
 
     @NonNull
     protected final MutableLiveData<MockState> mockState = new MutableLiveData<>();

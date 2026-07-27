@@ -49,6 +49,9 @@ import com.google.android.play.core.appupdate.AppUpdateManager;
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
 import com.google.android.play.core.install.model.AppUpdateType;
 import com.google.android.play.core.install.model.UpdateAvailability;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.tasks.Task;
 
 import java.text.DecimalFormat;
@@ -106,11 +109,11 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
                             | WindowInsetsCompat.Type.displayCutout()
             );
             
-            // Apply bottom margin to controls card
-            View controlsCard = findViewById(R.id.controls_card);
-            androidx.constraintlayout.widget.ConstraintLayout.LayoutParams lp = (androidx.constraintlayout.widget.ConstraintLayout.LayoutParams) controlsCard.getLayoutParams();
-            lp.bottomMargin = bars.bottom + (int) (16 * getResources().getDisplayMetrics().density);
-            controlsCard.setLayoutParams(lp);
+            // Apply bottom margin to AdView
+            View adViewContainer = findViewById(R.id.adView);
+            androidx.constraintlayout.widget.ConstraintLayout.LayoutParams adLp = (androidx.constraintlayout.widget.ConstraintLayout.LayoutParams) adViewContainer.getLayoutParams();
+            adLp.bottomMargin = bars.bottom;
+            adViewContainer.setLayoutParams(adLp);
 
             // Inject safe area top into WebView
             float density = getResources().getDisplayMetrics().density;
@@ -148,8 +151,18 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
             startMock();
         });
         buttonStop.setOnClickListener(view -> {
+            Intent stopIntent = new Intent(this, MockedLocationService.class);
+            stopIntent.setAction(MockedLocationService.ACTION_STOP);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(stopIntent);
+            } else {
+                startService(stopIntent);
+            }
+            
             if (binder != null) {
-                unbindService(this);
+                try {
+                    unbindService(this);
+                } catch (Exception ignored) {}
                 disconnectService();
             }
         });
@@ -241,6 +254,11 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         }
 
         checkUpdate();
+
+        MobileAds.initialize(this, initializationStatus -> {});
+        AdView adView = findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        adView.loadAd(adRequest);
     }
 
     private void startMock() {
