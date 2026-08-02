@@ -19,6 +19,8 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.ArrayAdapter;
+import android.widget.Toast;
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.appbar.MaterialToolbar;
 import androidx.core.graphics.Insets;
@@ -31,6 +33,7 @@ public class MoreActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_more);
 
@@ -232,13 +235,17 @@ public class MoreActivity extends AppCompatActivity {
         EditText etMapProvider = findViewById(R.id.et_MapProvider);
         
         AutoCompleteTextView spinnerDecimalPrecision = findViewById(R.id.spinner_DecimalPrecision);
+        
+        boolean isPremium = sharedPref.getBoolean("isPremium", false);
+
         String[] precisionOptions = new String[]{
-                "6 (Contoh: -7.123456, 110.123456)",
-                "7 (Contoh: -7.1234567, 110.1234567)",
-                "8 (Contoh: -7.12345678, 110.12345678)",
-                "9 (Contoh: -7.123456789, 110.123456789)",
-                "10 (Contoh: -7.1234567890, 110.1234567890)"
+                "6 (Presisi Standar)",
+                "7 (Akurasi Tinggi - Default)",
+                "8 (Akurasi Sangat Tinggi)",
+                "9 (Presisi Ekstrim)",
+                "10 (Presisi Maksimal)"
         };
+
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, precisionOptions);
         spinnerDecimalPrecision.setAdapter(adapter);
 

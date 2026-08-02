@@ -31,7 +31,7 @@
         }
         .layer-control {
             position: absolute;
-            top: calc(96px + var(--safe-area-inset-top, 0px));
+            top: calc(100px + var(--safe-area-inset-top, 0px));
             right: 16px;
             z-index: 1000;
             background: white;
@@ -48,12 +48,12 @@
         .layer-control:active {
             background: #f0f0f0;
         }
-        .layer-control span {
+        .layer-control span, .layer-control i {
             font-size: 24px;
         }
         .layer-menu {
             position: absolute;
-            top: calc(146px + var(--safe-area-inset-top, 0px));
+            top: calc(150px + var(--safe-area-inset-top, 0px));
             right: 16px;
             z-index: 1000;
             background: white;
@@ -94,15 +94,9 @@
                 background: #303134;
             }
         }
-        @media (prefers-color-scheme: dark) {
-            .layer-control {
-                background: #202124;
-                color: white;
-            }
-        }
         #search-container {
             position: absolute;
-            top: calc(32px + var(--safe-area-inset-top, 0px));
+            top: calc(40px + var(--safe-area-inset-top, 0px));
             left: 16px;
             right: 16px;
             z-index: 1000;
@@ -132,7 +126,7 @@
             justify-content: center;
         }
         .leaflet-bottom.leaflet-right {
-            bottom: 150px; /* Stay above the bottom card */
+            bottom: calc(210px + var(--safe-area-inset-bottom, 0px)); /* Stay above card, banner and safe area */
         }
         :root {
             --dark-mode-filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);

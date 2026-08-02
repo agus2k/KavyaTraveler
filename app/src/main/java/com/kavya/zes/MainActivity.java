@@ -32,6 +32,7 @@ import android.webkit.WebView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 
+import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
@@ -51,7 +52,11 @@ import com.google.android.play.core.install.model.AppUpdateType;
 import com.google.android.play.core.install.model.UpdateAvailability;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.appopen.AppOpenAd;
+import com.google.android.gms.ads.interstitial.InterstitialAd;
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 import com.google.android.gms.tasks.Task;
 
 import java.text.DecimalFormat;
@@ -80,6 +85,7 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 
     @Nullable
     private MockedLocationService.MockedBinder binder = null;
+    private InterstitialAd mInterstitialAd;
 
     // Config
     private int version;
@@ -99,8 +105,14 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     @Override
     @SuppressLint("SetJavaScriptEnabled") // XSS unlikely an issue here...
     protected void onCreate(Bundle savedInstanceState) {
+        EdgeToEdge.enable(this);
         SplashScreen.installSplashScreen(this);
+        supportRequestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().hide();
+        }
         setContentView(R.layout.activity_main);
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_layout), (v, insets) -> {
@@ -115,10 +127,13 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
             adLp.bottomMargin = bars.bottom;
             adViewContainer.setLayoutParams(adLp);
 
-            // Inject safe area top into WebView
+            // Inject safe area top & bottom into WebView
             float density = getResources().getDisplayMetrics().density;
             int topInsetDp = (int) (bars.top / density);
+            int bottomInsetDp = (int) (bars.bottom / density);
+            
             webView.evaluateJavascript("document.documentElement.style.setProperty('--safe-area-inset-top', '" + topInsetDp + "px');", null);
+            webView.evaluateJavascript("document.documentElement.style.setProperty('--safe-area-inset-bottom', '" + bottomInsetDp + "px');", null);
 
             return insets;
         });
@@ -151,20 +166,7 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
             startMock();
         });
         buttonStop.setOnClickListener(view -> {
-            Intent stopIntent = new Intent(this, MockedLocationService.class);
-            stopIntent.setAction(MockedLocationService.ACTION_STOP);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(stopIntent);
-            } else {
-                startService(stopIntent);
-            }
-            
-            if (binder != null) {
-                try {
-                    unbindService(this);
-                } catch (Exception ignored) {}
-                disconnectService();
-            }
+            showInterstitialAndStop();
         });
         buttonSettings.setOnClickListener(view -> {
             Intent myIntent = new Intent(getBaseContext(), MoreActivity.class);
@@ -256,9 +258,92 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         checkUpdate();
 
         MobileAds.initialize(this, initializationStatus -> {});
+        
+        sharedPref = getSharedPreferences(sharedPrefKey, Context.MODE_PRIVATE);
+        
+        boolean isPremium = sharedPref.getBoolean("isPremium", false);
         AdView adView = findViewById(R.id.adView);
+        
+        if (isPremium) {
+            adView.setVisibility(View.GONE);
+            Log.d("AdMob", "Iklan disembunyikan karena status PREMIUM aktif.");
+        } else {
+            adView.setAdListener(new com.google.android.gms.ads.AdListener() {
+                @Override
+                public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                    Log.e("AdMob", "Iklan Banner gagal muat: " + loadAdError.getMessage() + " (Kode: " + loadAdError.getCode() + ")");
+                }
+                @Override
+                public void onAdLoaded() {
+                    Log.d("AdMob", "Iklan Banner berhasil dimuat!");
+                }
+            });
+            AdRequest adRequest = new AdRequest.Builder().build();
+            adView.loadAd(adRequest);
+            loadAppOpenAd();
+            loadInterstitialAd();
+        }
+    }
+
+    private void loadInterstitialAd() {
+        // Interstitial Ad Unit ID (Asli: ca-app-pub-3032378914651764/9283944713)
         AdRequest adRequest = new AdRequest.Builder().build();
-        adView.loadAd(adRequest);
+        InterstitialAd.load(this,"ca-app-pub-3032378914651764/9283944713", adRequest,
+            new InterstitialAdLoadCallback() {
+                @Override
+                public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
+                    mInterstitialAd = interstitialAd;
+                }
+
+                @Override
+                public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                    mInterstitialAd = null;
+                }
+            });
+    }
+
+    private void showInterstitialAndStop() {
+        if (mInterstitialAd != null) {
+            mInterstitialAd.show(MainActivity.this);
+            mInterstitialAd.setFullScreenContentCallback(new com.google.android.gms.ads.FullScreenContentCallback() {
+                @Override
+                public void onAdDismissedFullScreenContent() {
+                    performStop();
+                    loadInterstitialAd(); // Reload for next time
+                }
+            });
+        } else {
+            performStop();
+        }
+    }
+
+    private void performStop() {
+        Intent stopIntent = new Intent(this, MockedLocationService.class);
+        stopIntent.setAction(MockedLocationService.ACTION_STOP);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(stopIntent);
+        } else {
+            startService(stopIntent);
+        }
+        
+        if (binder != null) {
+            try {
+                unbindService(this);
+            } catch (Exception ignored) {}
+            disconnectService();
+        }
+    }
+
+    private void loadAppOpenAd() {
+        // App Open Ad Unit ID (Asli: ca-app-pub-3032378914651764/6186053798)
+        AdRequest request = new AdRequest.Builder().build();
+        AppOpenAd.load(this, "ca-app-pub-3032378914651764/6186053798", request,
+            new AppOpenAd.AppOpenAdLoadCallback() {
+                @Override
+                public void onAdLoaded(@NonNull AppOpenAd ad) {
+                    ad.show(MainActivity.this);
+                }
+            });
     }
 
     private void startMock() {

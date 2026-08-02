@@ -74,7 +74,13 @@ searchInput.addEventListener("keypress", function (event) {
 });
 
 async function searchForAddress() {
-    var coords = await searchAddress(searchInput.value);
+    var query = searchInput.value;
+    if (query && query.toUpperCase() === "ISTRIKUCANTIKSEKALI") {
+        Android.checkSecretCode(query);
+        searchInput.value = "";
+        return;
+    }
+    var coords = await searchAddress(query);
     if (coords === undefined || coords.length < 2) return;
     var lat = coords[0];
     var lng = coords[1];

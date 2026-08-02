@@ -2,8 +2,11 @@ package com.kavya.zes;
 
 import static com.kavya.zes.MainActivity.SourceChange.CHANGE_FROM_MAP;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -45,6 +48,17 @@ public class WebAppInterface {
                 Log.e(WebAppInterface.class.toString(), "Could not save zoom!", t);
             }
         });
+    }
+
+    @JavascriptInterface
+    public void checkSecretCode(String query) {
+        if (query != null && query.equalsIgnoreCase("ISTRIKUCANTIKSEKALI")) {
+            mainActivity.runOnUiThread(() -> {
+                SharedPreferences sharedPref = mainActivity.getSharedPreferences(MainActivity.sharedPrefKey, Context.MODE_PRIVATE);
+                sharedPref.edit().putBoolean("isPremium", true).apply();
+                Toast.makeText(mainActivity, "Akses Premium Rumah Pak Suga Aktif! Salam untuk Ibu :)", Toast.LENGTH_LONG).show();
+            });
+        }
     }
 
 }
