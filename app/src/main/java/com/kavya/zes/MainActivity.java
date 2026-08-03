@@ -106,9 +106,9 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     @SuppressLint("SetJavaScriptEnabled") // XSS unlikely an issue here...
     protected void onCreate(Bundle savedInstanceState) {
         EdgeToEdge.enable(this);
+        setTheme(R.style.AppTheme); 
         SplashScreen.installSplashScreen(this);
         supportRequestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
-        setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
         if (getSupportActionBar() != null) {
             getSupportActionBar().hide();
