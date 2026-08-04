@@ -4,7 +4,22 @@ import android.net.Uri;
 
 import androidx.annotation.Nullable;
 
-public record GeoUri(double lat, double lng, @Nullable Double zoom) {
+public final class GeoUri {
+    private final double lat;
+    private final double lng;
+    @Nullable
+    private final Double zoom;
+
+    public GeoUri(double lat, double lng, @Nullable Double zoom) {
+        this.lat = lat;
+        this.lng = lng;
+        this.zoom = zoom;
+    }
+
+    public double lat() { return lat; }
+    public double lng() { return lng; }
+    @Nullable
+    public Double zoom() { return zoom; }
 
     @Nullable
     public static GeoUri parse(String geoUri) {
