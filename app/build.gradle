@@ -10,13 +10,13 @@ android {
         minSdk = 29
         compileSdk = 36
         targetSdk = 36
-        versionCode = 330
-        versionName = "3.3.0"
+        versionCode = 334
+        versionName = "3.3.4"
     }
     buildTypes {
         release {
-            minifyEnabled = true
-            shrinkResources = true
+            minifyEnabled false
+            shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }

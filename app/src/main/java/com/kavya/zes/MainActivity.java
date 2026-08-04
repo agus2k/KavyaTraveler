@@ -16,7 +16,6 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
@@ -105,12 +104,10 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     protected void onCreate(Bundle savedInstanceState) {
         SplashScreen.installSplashScreen(this);
         EdgeToEdge.enable(this);
-        supportRequestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().hide();
-        }
         setContentView(R.layout.activity_main);
+
+        webView = findViewById(R.id.webView0);
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_layout), (v, insets) -> {
             Insets bars = insets.getInsets(
@@ -120,23 +117,26 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
             
             // Apply bottom margin to AdView
             View adViewContainer = findViewById(R.id.adView);
-            androidx.constraintlayout.widget.ConstraintLayout.LayoutParams adLp = (androidx.constraintlayout.widget.ConstraintLayout.LayoutParams) adViewContainer.getLayoutParams();
-            adLp.bottomMargin = bars.bottom;
-            adViewContainer.setLayoutParams(adLp);
+            if (adViewContainer != null) {
+                androidx.constraintlayout.widget.ConstraintLayout.LayoutParams adLp = (androidx.constraintlayout.widget.ConstraintLayout.LayoutParams) adViewContainer.getLayoutParams();
+                adLp.bottomMargin = bars.bottom;
+                adViewContainer.setLayoutParams(adLp);
+            }
 
             // Inject safe area top & bottom into WebView
-            float density = getResources().getDisplayMetrics().density;
-            int topInsetDp = (int) (bars.top / density);
-            int bottomInsetDp = (int) (bars.bottom / density);
-            
-            webView.evaluateJavascript("document.documentElement.style.setProperty('--safe-area-inset-top', '" + topInsetDp + "px');", null);
-            webView.evaluateJavascript("document.documentElement.style.setProperty('--safe-area-inset-bottom', '" + bottomInsetDp + "px');", null);
+            if (webView != null) {
+                float density = getResources().getDisplayMetrics().density;
+                int topInsetDp = (int) (bars.top / density);
+                int bottomInsetDp = (int) (bars.bottom / density);
+                
+                webView.evaluateJavascript("document.documentElement.style.setProperty('--safe-area-inset-top', '" + topInsetDp + "px');", null);
+                webView.evaluateJavascript("document.documentElement.style.setProperty('--safe-area-inset-bottom', '" + bottomInsetDp + "px');", null);
+            }
 
             return insets;
         });
 
         context = getApplicationContext();
-        webView = findViewById(R.id.webView0);
         WebAppInterface webAppInterface = new WebAppInterface(this);
 
         buttonApply = findViewById(R.id.button_apply);
@@ -179,12 +179,12 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         try {
             PackageInfo pInfo = this.getPackageManager().getPackageInfo(getPackageName(), 0);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                currentVersion = (int) (pInfo.getLongVersionCode() >> 32);
+                currentVersion = (int) (pInfo.getLongVersionCode());
             } else {
                 currentVersion = pInfo.versionCode;
             }
-        } catch (NameNotFoundException e) {
-            Log.e(MainActivity.class.toString(), "Could not read version info!", e);
+        } catch (Exception e) {
+            Log.e("MainActivity", "Could not read version info!", e);
         }
 
         SharedPreferences sharedPref = getSharedPreferences(sharedPrefKey, Context.MODE_PRIVATE);
@@ -254,31 +254,36 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 
         checkUpdate();
 
-        MobileAds.initialize(this, initializationStatus -> {});
-        
-        sharedPref = getSharedPreferences(sharedPrefKey, Context.MODE_PRIVATE);
-        
-        boolean isPremium = sharedPref.getBoolean("isPremium", false);
-        AdView adView = findViewById(R.id.adView);
-        
-        if (isPremium) {
-            adView.setVisibility(View.GONE);
-            Log.d("AdMob", "Iklan disembunyikan karena status PREMIUM aktif.");
-        } else {
-            adView.setAdListener(new com.google.android.gms.ads.AdListener() {
-                @Override
-                public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
-                    Log.e("AdMob", "Iklan Banner gagal muat: " + loadAdError.getMessage() + " (Kode: " + loadAdError.getCode() + ")");
+        try {
+            MobileAds.initialize(this, initializationStatus -> {});
+            
+            SharedPreferences sp = getSharedPreferences(sharedPrefKey, Context.MODE_PRIVATE);
+            boolean isPremium = sp.getBoolean("isPremium", false);
+            AdView adView = findViewById(R.id.adView);
+            
+            if (adView != null) {
+                if (isPremium) {
+                    adView.setVisibility(View.GONE);
+                } else {
+                    adView.setAdListener(new com.google.android.gms.ads.AdListener() {
+                        @Override
+                        public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                            Log.e("AdMob", "Iklan Banner gagal muat: " + loadAdError.getMessage());
+                        }
+                    });
+                    adView.loadAd(new AdRequest.Builder().build());
+                    loadAppOpenAd();
+                    loadInterstitialAd();
                 }
-                @Override
-                public void onAdLoaded() {
-                    Log.d("AdMob", "Iklan Banner berhasil dimuat!");
-                }
-            });
-            AdRequest adRequest = new AdRequest.Builder().build();
-            adView.loadAd(adRequest);
-            loadAppOpenAd();
-            loadInterstitialAd();
+            }
+        } catch (Exception e) {
+            Log.e("MainActivity", "Ads initialization failed", e);
+        }
+
+        try {
+            checkUpdate();
+        } catch (Exception e) {
+            Log.e("MainActivity", "Update check failed", e);
         }
     }
 
@@ -332,13 +337,16 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     }
 
     private void loadAppOpenAd() {
-        // App Open Ad Unit ID (Asli: ca-app-pub-3032378914651764/6186053798)
+        if (isFinishing() || isDestroyed()) return;
+        
         AdRequest request = new AdRequest.Builder().build();
         AppOpenAd.load(this, "ca-app-pub-3032378914651764/6186053798", request,
             new AppOpenAd.AppOpenAdLoadCallback() {
                 @Override
                 public void onAdLoaded(@NonNull AppOpenAd ad) {
-                    ad.show(MainActivity.this);
+                    if (!isFinishing() && !isDestroyed()) {
+                        ad.show(MainActivity.this);
+                    }
                 }
             });
     }
@@ -359,20 +367,24 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     }
 
     private void checkUpdate() {
+        if (isFinishing() || isDestroyed()) return;
+        
         AppUpdateManager appUpdateManager = AppUpdateManagerFactory.create(this);
         Task<AppUpdateInfo> appUpdateInfoTask = appUpdateManager.getAppUpdateInfo();
 
         appUpdateInfoTask.addOnSuccessListener(appUpdateInfo -> {
-            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
-                    && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)) {
-                try {
-                    appUpdateManager.startUpdateFlowForResult(
-                            appUpdateInfo,
-                            AppUpdateType.IMMEDIATE,
-                            this,
-                            999);
-                } catch (Exception e) {
-                    Log.e("MainActivity", "Update flow failed", e);
+            if (!isFinishing() && !isDestroyed()) {
+                if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                        && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)) {
+                    try {
+                        appUpdateManager.startUpdateFlowForResult(
+                                appUpdateInfo,
+                                AppUpdateType.IMMEDIATE,
+                                this,
+                                999);
+                    } catch (Exception e) {
+                        Log.e("MainActivity", "Update flow failed", e);
+                    }
                 }
             }
         });

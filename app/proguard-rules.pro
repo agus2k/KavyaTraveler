@@ -1,21 +1,39 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Keep entire app package to prevent obfuscation issues with internal logic
+-keep class com.kavya.zes.** { *; }
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# AdMob Rules
+-keep public class com.google.android.gms.ads.** {
+   public *;
+}
+-keep public class com.google.ads.** {
+   public *;
+}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Keep Play Services and Native methods
+-keep class com.google.android.gms.** { *; }
+-dontwarn com.google.android.gms.**
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Keep Play Core (App Update)
+-keep class com.google.android.play.core.** { *; }
+-dontwarn com.google.android.play.core.**
+
+# General AppCompat and Material rules
+-keep public class * extends androidx.appcompat.app.AppCompatActivity
+-keep public class * extends android.app.Service
+-keep public class * extends android.app.Application
+-keep class com.google.android.material.** { *; }
+
+# WebView and JavaScript
+-keepattributes JavascriptInterface
+-keepattributes *Annotation*
+-keepattributes Signature
+-keepattributes SourceFile,LineNumberTable
+
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+
+# Prevent stripping of R class (sometimes helps with resource issues)
+-keep class **.R$* {
+    public static <fields>;
+}
