@@ -114,6 +114,7 @@ function onZoomEnd(e) {
 function updateCircle(aLat, aLng, aRadius) {
   if (aRadius !== undefined) circle.setRadius(aRadius);
   circle.setLatLng([aLat, aLng]);
+  map.setView([aLat, aLng], map.getZoom());
 }
 
 function setOnMap(aLat, aLng, aRadius) {

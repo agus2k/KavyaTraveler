@@ -34,10 +34,10 @@
     <string name="ActivityMore_LatOffset">Offset Lintang</string>
     <string name="ActivityMore_LongOffset">Offset Bujur</string>
     <string name="ActivityMore_DecimalPrecision">Presisi Desimal (6-10)</string>
-    <string name="Bookmark_Title">Lokasi Tersimpan</string>
-    <string name="Bookmark_Add">Tambah lokasi saat ini ke bookmark</string>
-    <string name="Bookmark_Name">Nama Bookmark</string>
-    <string name="Bookmark_Empty">Belum ada lokasi tersimpan</string>
+    <string name="Bookmark_Title">Lokasi Favorit</string>
+    <string name="Bookmark_Add">Simpan Lokasi</string>
+    <string name="Bookmark_Name">Nama Lokasi</string>
+    <string name="Bookmark_Empty">Belum ada lokasi favorit</string>
     <string name="Bookmark_Delete">Hapus</string>
     <string name="Bookmark_Save">Simpan</string>
     <string name="Bookmark_Cancel">Batal</string>

@@ -23,7 +23,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.text.Editable;
-import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
@@ -36,7 +35,6 @@ import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.splashscreen.SplashScreen;
@@ -441,8 +439,8 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         if (mockFrequency <= 0) mockFrequency = 1;
         dLat = getDouble(sharedPref, "dLat", 0);
         dLng = getDouble(sharedPref, "dLng", 0);
-        circleLat = getDouble(sharedPref, "circleLat", 0);
-        circleLng = getDouble(sharedPref, "circleLng", 0);
+        circleLat = getDouble(sharedPref, "circleLat", lat);
+        circleLng = getDouble(sharedPref, "circleLng", lng);
         mockSpeed = sharedPref.getBoolean("mockSpeed", true);
         endTime = sharedPref.getLong("endTime", 0);
         mapProvider = sharedPref.getString("mapProvider", MapProviderUtil.getDefaultMapProvider(Locale.getDefault()));
@@ -646,34 +644,95 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 
     private void showBookmarksDialog() {
         List<Bookmark> bookmarks = BookmarkUtil.getBookmarks(this);
-        ArrayAdapter<Bookmark> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, bookmarks);
+        android.view.View dialogView = getLayoutInflater().inflate(R.layout.dialog_bookmarks, null);
+        android.widget.ListView listView = dialogView.findViewById(R.id.list_bookmarks);
+        android.widget.TextView tvEmpty = dialogView.findViewById(R.id.text_empty);
+        android.view.View btnClose = dialogView.findViewById(R.id.button_close);
+        android.view.View btnAdd = dialogView.findViewById(R.id.btn_add_location);
 
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.Bookmark_Title)
-                .setAdapter(adapter, (dialog, which) -> {
-                    Bookmark b = bookmarks.get(which);
+        if (bookmarks.isEmpty()) tvEmpty.setVisibility(android.view.View.VISIBLE);
+
+        androidx.appcompat.app.AlertDialog dialog = new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+
+        ArrayAdapter<Bookmark> adapter = new ArrayAdapter<Bookmark>(this, R.layout.item_bookmark, bookmarks) {
+            @NonNull
+            @Override
+            public View getView(int position, @Nullable View convertView, @NonNull android.view.ViewGroup parent) {
+                View view = convertView != null ? convertView : getLayoutInflater().inflate(R.layout.item_bookmark, parent, false);
+                Bookmark b = getItem(position);
+                if (b != null) {
+                    android.widget.TextView textName = view.findViewById(R.id.text_name);
+                    android.widget.TextView textCoords = view.findViewById(R.id.text_coords);
+                    android.view.View btnDelete = view.findViewById(R.id.button_delete_item);
                     
-                    new AlertDialog.Builder(this)
-                            .setTitle(b.name)
-                            .setItems(new String[]{"Pindah Lokasi Ke Sini", "Jadikan Pusat Lingkaran"}, (d, choice) -> {
-                                if (choice == 0) {
-                                    setLatLng(b.lat, b.lng, SourceChange.CHANGE_FROM_MAP);
-                                    setMapMarker(b.lat, b.lng);
-                                } else {
-                                    circleLat = b.lat;
-                                    circleLng = b.lng;
-                                    saveSettings();
-                                    updateCircleOnMap();
-                                }
-                            })
-                            .show();
-                })
-                .setPositiveButton(R.string.Bookmark_Add, (dialog, which) -> showAddBookmarkDialog())
-                .setNegativeButton(R.string.Bookmark_Cancel, null)
-                .setNeutralButton(R.string.Bookmark_Delete, (dialog, which) -> {
-                    showDeleteBookmarkDialog(bookmarks);
-                })
-                .show();
+                    textName.setText(b.name);
+                    textCoords.setText(String.format(Locale.ROOT, "%s, %s", DECIMAL_FORMAT.format(b.lat), DECIMAL_FORMAT.format(b.lng)));
+                    
+                    // Row click listener
+                    view.setOnClickListener(v -> {
+                        new com.google.android.material.dialog.MaterialAlertDialogBuilder(getContext())
+                                .setTitle(b.name)
+                                .setItems(new String[]{"Pindah Lokasi Ke Sini", "Jadikan Pusat Lingkaran"}, (d, choice) -> {
+                                    if (choice == 0) {
+                                        setLatLng(b.lat, b.lng, SourceChange.CHANGE_FROM_MAP);
+                                        setMapMarker(b.lat, b.lng);
+                                        dialog.dismiss();
+                                    } else {
+                                        circleLat = b.lat;
+                                        circleLng = b.lng;
+                                        saveSettings();
+                                        updateCircleOnMap();
+                                        dialog.dismiss();
+                                    }
+                                })
+                                .show();
+                    });
+
+                    btnDelete.setOnClickListener(v -> {
+                        // Confirm delete
+                        android.view.View confirmView = getLayoutInflater().inflate(R.layout.dialog_confirm, null);
+                        android.widget.TextView cTitle = confirmView.findViewById(R.id.dialog_title);
+                        android.widget.TextView cMessage = confirmView.findViewById(R.id.dialog_message);
+                        android.widget.Button cPos = confirmView.findViewById(R.id.btn_positive);
+                        android.widget.Button cNeg = confirmView.findViewById(R.id.btn_negative);
+                        android.view.View cClose = confirmView.findViewById(R.id.button_close);
+
+                        cTitle.setText("Hapus Lokasi");
+                        cMessage.setText("Apakah Anda yakin ingin menghapus \"" + b.name + "\"?");
+                        cPos.setText("Hapus");
+                        cPos.setBackgroundTintList(android.content.res.ColorStateList.valueOf(androidx.core.content.ContextCompat.getColor(getContext(), android.R.color.holo_red_dark)));
+
+                        androidx.appcompat.app.AlertDialog confirmDialog = new com.google.android.material.dialog.MaterialAlertDialogBuilder(getContext())
+                                .setView(confirmView)
+                                .create();
+
+                        cClose.setOnClickListener(cv -> confirmDialog.dismiss());
+                        cNeg.setOnClickListener(cv -> confirmDialog.dismiss());
+                        cPos.setOnClickListener(cv -> {
+                            bookmarks.remove(position);
+                            BookmarkUtil.saveBookmarks(getContext(), bookmarks);
+                            notifyDataSetChanged();
+                            if (bookmarks.isEmpty()) tvEmpty.setVisibility(android.view.View.VISIBLE);
+                            confirmDialog.dismiss();
+                        });
+                        confirmDialog.show();
+                    });
+                }
+                return view;
+            }
+        };
+
+        listView.setAdapter(adapter);
+
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+        btnAdd.setOnClickListener(v -> {
+            dialog.dismiss();
+            showAddBookmarkDialog();
+        });
+
+        dialog.show();
     }
 
     private void updateCircleOnMap() {
@@ -684,38 +743,35 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     }
 
     private void showAddBookmarkDialog() {
-        final EditText input = new EditText(this);
-        input.setInputType(InputType.TYPE_CLASS_TEXT);
-        input.setHint(R.string.Bookmark_Name);
+        android.view.View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_bookmark, null);
+        com.google.android.material.textfield.TextInputEditText editTextName = dialogView.findViewById(R.id.edit_text_name);
+        android.view.View btnClose = dialogView.findViewById(R.id.button_close);
+        android.view.View btnSave = dialogView.findViewById(R.id.btn_save);
 
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.Bookmark_Add)
-                .setView(input)
-                .setPositiveButton(R.string.Bookmark_Save, (dialog, which) -> {
-                    String name = input.getText().toString();
-                    if (!name.trim().isEmpty()) {
-                        List<Bookmark> bookmarks = BookmarkUtil.getBookmarks(this);
-                        bookmarks.add(new Bookmark(name, lat, lng));
-                        BookmarkUtil.saveBookmarks(this, bookmarks);
-                    }
-                })
-                .setNegativeButton(R.string.Bookmark_Cancel, null)
-                .show();
-    }
+        androidx.appcompat.app.AlertDialog dialog = new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
 
-    private void showDeleteBookmarkDialog(List<Bookmark> bookmarks) {
-        if (bookmarks.isEmpty()) return;
-        String[] names = new String[bookmarks.size()];
-        for (int i = 0; i < bookmarks.size(); i++) names[i] = bookmarks.get(i).name;
+        btnClose.setOnClickListener(v -> dialog.dismiss());
 
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.Bookmark_Delete)
-                .setItems(names, (dialog, which) -> {
-                    bookmarks.remove(which);
-                    BookmarkUtil.saveBookmarks(this, bookmarks);
-                    showBookmarksDialog();
-                })
-                .show();
+        btnSave.setOnClickListener(v -> {
+            if (editTextName.getText() != null) {
+                String name = editTextName.getText().toString();
+                
+                if (name.trim().isEmpty()) {
+                    editTextName.setError("Nama tidak boleh kosong");
+                    return;
+                }
+                
+                List<Bookmark> bookmarks = BookmarkUtil.getBookmarks(this);
+                bookmarks.add(new Bookmark(name, lat, lng));
+                BookmarkUtil.saveBookmarks(this, bookmarks);
+                dialog.dismiss();
+                showBookmarksDialog();
+            }
+        });
+
+        dialog.show();
     }
 
     private void indicateMockStop() {
